@@ -8,6 +8,48 @@
     <!-- Paste your H5P embed iframe code below -->
     <iframe src="https://apoorvasastry.h5p.com/content/1292967127753034558/embed" width="1088" height="1994" frameborder="0" allowfullscreen="allowfullscreen" allow="autoplay *; geolocation *; microphone *; camera *; midi *; encrypted-media *" aria-label="Masters Research Survey"></iframe><script src="https://apoorvasastry.h5p.com/js/h5p-resizer.js" charset="UTF-8"></script>
 <script src="https://apoorvasastry.h5p.com/js/h5p-resizer.js" charset="UTF-8"></script>
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyBjTVLRn6IlpE2XfMbX1T4hQLZfOJ99z9dvRk-FU3DK21QguuFX3G4lByAqkXyffQ/exec';
+<script>
+  const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyBjTVLRn6IlpE2XfMbX1T4hQLZfOJ99z9dvRk-FU3DK21QguuFX3G4lByAqkXyffQ/exec';
+
+  window.addEventListener('message', function(event) {
+    // Check if the message contains an H5P xAPI statement
+    try {
+      let data = event.data;
+      if (typeof data === 'string') {
+        data = JSON.parse(data);
+      }
+
+      // H5P iframe events typically wrap the xAPI statement
+      if (data && data.statement) {
+        const statement = data.statement;
+
+        // Extract fields safely
+        let actor = 'Anonymous';
+        if (statement.actor && statement.actor.name) actor = statement.actor.name[0];
+        else if (statement.actor && statement.actor.account) actor = statement.actor.account.name;
+
+        const verb = statement.verb && statement.verb.display ? statement.verb.display['en-US'] : (statement.verb ? statement.verb.id : 'unknown');
+        const object = statement.object && statement.object.definition && statement.object.definition.name ? statement.object.definition.name['en-US'] : (statement.object ? statement.object.id : 'unknown');
+        
+        let score = '';
+        if (statement.result && statement.result.score && statement.result.score.raw !== undefined) {
+          score = statement.result.score.raw;
+        }
+
+        const payload = { actor, verb, object, score };
+
+        // Send to Google Sheets
+        fetch(GOOGLE_SCRIPT_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify(payload)
+        }).catch(err => console.error('Error sending xAPI data:', err));
+      }
+    } catch (e) {
+      // Ignore non-JSON or unrelated window messages
+    }
+  });
+</script>
 </body>
 </html>
